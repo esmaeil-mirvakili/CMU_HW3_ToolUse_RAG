@@ -13,9 +13,11 @@ from calculator.utils import (
 )
 from tqdm.auto import tqdm
 from datasets import Dataset
+import argparse
+import os
 
 
-def main():
+def main(args):
     """Initialize the pre-trained Pythia model"""
     model = AutoModelForCausalLM.from_pretrained(
         "EleutherAI/pythia-1b",
@@ -36,15 +38,17 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
     tokenizer.padding_side = "right"
     tokenizer.pad_token = "<|padding|>"
-
-    train(model, tokenizer, dataset["train"])
-    evaluate(model, tokenizer, dataset["test"])
+    
+    os.makedirs(args.output, exist_ok=True)
+    
+    train(model, tokenizer, dataset["train"], args=args)
+    evaluate(model, tokenizer, dataset["test"], args)
 
     print("Done!")
 
 
 def evaluate(
-    model: PeftModelForCausalLM, tokenizer: AutoTokenizer, test_dataset: Dataset
+    model: PeftModelForCausalLM, tokenizer: AutoTokenizer, test_dataset: Dataset, args
 ):
     test_data = test_dataset.to_pandas()
     test_data["label"] = pd.to_numeric(test_data["label"])
@@ -67,7 +71,12 @@ def evaluate(
     test_data["answer-no-calc"] = generations_no_calc
     test_data["label-calc"] = labels_calc
     test_data["label-no-calc"] = labels_no_calc
-    test_data.to_json("pythia-1b-asdiv/eval.jsonl", lines=True, orient="records")
+    output_path = args.output
+    test_data.to_json(
+        os.path.join(output_path, "eval.jsonl"),
+        lines=True,
+        orient="records",
+    )
 
     acc_calc = np.isclose(test_data["label-calc"], test_data["label"]).mean()
     acc_no_calc = np.isclose(test_data["label-no-calc"], test_data["label"]).mean()
@@ -87,6 +96,7 @@ def train(
     grad_acc_steps: int = 1,
     batch_size: int = 32,
     epochs: int = 5,
+    args=None,
 ) -> None:
     tokenized_dataset = train_dataset.map(
         lambda x: {
@@ -115,8 +125,7 @@ def train(
 
             pbar.set_postfix({"loss": outputs["loss"].item()})
             step += 1
-
-    model.save_pretrained("pythia-1b-asdiv")
+    model.save_pretrained(args.output)
 
 
 @torch.inference_mode(True)
@@ -143,4 +152,10 @@ def inference(
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Finetuning a model to use calculator."
+    )
+    parser.add_argument(
+        "--output", default="pythia-1b-asdiv", type=str, help="output path"
+    )
+    main(parser.parse_args())
