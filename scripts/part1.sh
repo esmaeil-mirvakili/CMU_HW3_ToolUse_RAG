@@ -2,4 +2,4 @@
 
 bash scripts/install.sh
 
-python src/calculator/main.py
+python src/calculator/main.py "$@"
