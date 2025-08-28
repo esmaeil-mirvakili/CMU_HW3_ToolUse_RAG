@@ -38,9 +38,9 @@ def main(args):
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
     tokenizer.padding_side = "right"
     tokenizer.pad_token = "<|padding|>"
-    
+
     os.makedirs(args.output, exist_ok=True)
-    
+
     train(model, tokenizer, dataset["train"], args=args)
     evaluate(model, tokenizer, dataset["test"], args)
 
@@ -139,6 +139,7 @@ def inference(
     for i in range(max_tokens):
         if calculator and can_use_calculator(prefix):
             prefix = use_calculator(prefix)
+            print(f"Using calculator! New prefix: {prefix}")
 
         input_ids = tokenizer(prefix)["input_ids"]
         outputs = model(
