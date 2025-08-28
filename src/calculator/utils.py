@@ -1,6 +1,7 @@
 import ast
 import operator
 from datasets import load_dataset, DatasetDict
+import re
 
 
 # Define supported operators
@@ -92,7 +93,8 @@ def can_use_calculator(s: str) -> bool:
     Hint:
         Q1.2
     """
-    return ...
+    pattern = r"^.*<<.+>>$"
+    return re.match(pattern, s) is not None
 
 
 def use_calculator(input: str) -> str:
@@ -110,11 +112,14 @@ def use_calculator(input: str) -> str:
 
     Hint: safe_eval
     """
+    pattern = r"^.*<<(.+)>>$"
     try:
-        return ...
+        match = re.search(pattern, input)
+        res = safe_eval(match.group(1))
+        return input + str(res)
     except:
         # expression not well formed! fall back to next token prediction
-        return ...
+        return input
 
 
 def extract_label(answer: str) -> float:
