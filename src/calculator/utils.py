@@ -93,8 +93,7 @@ def can_use_calculator(s: str) -> bool:
     Hint:
         Q1.2
     """
-    pattern = r"^.*<<.+>>$"
-    return re.match(pattern, s) is not None
+    return s.endswith(">>")
 
 
 def use_calculator(input: str) -> str:
@@ -112,7 +111,7 @@ def use_calculator(input: str) -> str:
 
     Hint: safe_eval
     """
-    pattern = r"^.*<<(.+)>>$"
+    pattern = r".*<<\s*(.+)\s*>>$"
     try:
         match = re.search(pattern, input)
         res = safe_eval(match.group(1))
