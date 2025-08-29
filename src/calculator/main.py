@@ -40,6 +40,7 @@ def main(args):
     tokenizer.pad_token = "<|padding|>"
 
     os.makedirs(args.output, exist_ok=True)
+    print("Training started! The output path is:", args.output)
 
     train(model, tokenizer, dataset["train"], args=args)
     evaluate(model, tokenizer, dataset["test"], args)
